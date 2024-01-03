@@ -1,50 +1,44 @@
 #!/usr/bin/python3
-'''
-This module defines the REST API
-'''
+"""
+Python script that, using this REST API
+"""
+
 import requests
 from sys import argv
-BASE_URL = 'https://jsonplaceholder.typicode.com'
-
-
-def get_name(id):
-    '''Fetch employee name by ID'''
-    response = requests.get(f'{BASE_URL}/users/{id}')
-    response.raise_for_status()
-    user_data = response.json()
-    return user_data.get('name')
-
-
-def get_todos(id):
-    '''Fetch TODOs for the given employee ID'''
-    response = requests.get(f'{BASE_URL}/todos', params={'userId': id})
-    response.raise_for_status()
-    return response.json()
-
-
-def display_todo(id):
-    '''Display the TODO list progress for the given employee ID'''
-    try:
-        employee_name = get_name(id)
-        todos = get_todos(id)
-
-        completed_tasks = [task for task in todos if task['completed']]
-        completed_count = len(completed_tasks)
-        total_tasks = len(todos)
-
-        print(f"Employee {employee_name} is done "
-              f"with tasks({completed_count}/{total_tasks}):")
-
-        for task in completed_tasks:
-            print(f"\t {task['title']}")
-
-    except requests.RequestException as e:
-        print(f"An error occurred: {e}")
-
 
 if __name__ == "__main__":
-    if len(argv) < 2:
-        exit(1)
+    # Check if the correct number of arguments is provided
+    if len(argv) != 2:
+        print("Usage: {} employee_id".format(argv[0]))
+        exit()
 
-    employee_id = int(argv[1])
-    display_todo(employee_id)
+    # Get the employee ID from command line arguments
+    employee_id = argv[1]
+
+    # Define the base URL for the API
+    base_url = "https://jsonplaceholder.typicode.com"
+
+    # Fetch user information
+    user_url = "{}/users/{}".format(base_url, employee_id)
+    user_response = requests.get(user_url)
+    user_data = user_response.json()
+    employee_name = user_data.get("name")
+
+    # Fetch user's tasks
+    tasks_url = "{}/todos?userId={}".format(base_url, employee_id)
+    tasks_response = requests.get(tasks_url)
+    tasks_data = tasks_response.json()
+
+    # Count completed tasks
+    total_tasks = len(tasks_data)
+    completed_tasks = [task for task in tasks_data if task.get("completed")]
+    total_completed_tasks = len(completed_tasks)
+
+    # Display the results
+    print("Employee {} is done with tasks({}/{}):".format(
+        employee_name, total_completed_tasks, total_tasks))
+
+    # Display titles of completed tasks
+    for task in completed_tasks:
+        title = task.get("title")
+        print("\t {}".format(title))
