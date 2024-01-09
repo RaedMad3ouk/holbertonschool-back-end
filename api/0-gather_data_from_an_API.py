@@ -1,44 +1,51 @@
-#!/usr/bin/python3
-"""
-Python script that, using this REST API
-"""
-
 import requests
-from sys import argv
+import sys
 
-if __name__ == "__main__":
-    # Check if the correct number of arguments is provided
-    if len(argv) != 2:
-        print("Usage: {} employee_id".format(argv[0]))
-        exit()
 
-    # Get the employee ID from command line arguments
-    employee_id = argv[1]
-
-    # Define the base URL for the API
+def fetch_employee_data(employee_id):
+    # Base URL for the API
     base_url = "https://jsonplaceholder.typicode.com"
 
-    # Fetch user information
-    user_url = "{}/users/{}".format(base_url, employee_id)
+    # Construct URLs to fetch employee data and task
+    user_url = f"{base_url}/users/{employee_id}"
+    todos_url = f"{base_url}/todos?userId={employee_id}"
+
+    # Send GET requests to retrieve data
     user_response = requests.get(user_url)
+    todos_response = requests.get(todos_url)
+
+    # Check if the requests were successful (status code 200)
+    if user_response.status_code != 200 or todos_response.status_code != 200:
+        print("Failed to fetch data. Please check the employee ID or try again later.")
+        return None, None  # Return None if data retrieval fails
+
+    # Extract JSON data from responses
     user_data = user_response.json()
-    employee_name = user_data.get("name")
+    todos_data = todos_response.json()
 
-    # Fetch user's tasks
-    tasks_url = "{}/todos?userId={}".format(base_url, employee_id)
-    tasks_response = requests.get(tasks_url)
-    tasks_data = tasks_response.json()
+    return user_data, todos_data  # Return retrieved user and todos data
 
-    # Count completed tasks
-    total_tasks = len(tasks_data)
-    completed_tasks = [task for task in tasks_data if task.get("completed")]
-    total_completed_tasks = len(completed_tasks)
+def display_employee_progress(user_data, todos_data):
+    # Check if data is available
+    if user_data is not None and todos_data is not None:
+        if 'name' in user_data:
+            employee_name = user_data['name']
+            total_tasks = len(todos_data)
+            completed_tasks = sum(1 for task in todos_data if task['completed'])
 
-    # Display the results
-    print("Employee {} is done with tasks({}/{}):".format(
-        employee_name, total_completed_tasks, total_tasks))
+            # Display the employee's TODO list progress
+            print(f"Employee {employee_name} is done with tasks({completed_tasks}/{total_tasks}):")
+            print(f"\t{employee_name}: name of the employee")
+            print(f"\t{completed_tasks}: number of completed tasks")
+            print(f"\t{total_tasks}: total number of tasks")
 
-    # Display titles of completed tasks
-    for task in completed_tasks:
-        title = task.get("title")
-        print("\t {}".format(title))
+if __name__ == "__main__":
+    # Check if the correct number of arguments (employee ID) is provided
+    if len(sys.argv) != 2:
+        print("Usage: python script_name.py employee_id")
+        sys.exit(1)
+
+    employee_id = int(sys.argv[1])  # Get employee ID from command line argument
+    user_info, tasks_info = fetch_employee_data(employee_id)  # Fetch user and tasks data
+    display_employee_progress(user_info, tasks_info)  # Display employee's progress
+
