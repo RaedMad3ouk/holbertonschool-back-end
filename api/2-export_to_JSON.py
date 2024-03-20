@@ -1,25 +1,28 @@
 #!/usr/bin/python3
-"""Write a Python script that, using REST API
-and render json file """
+"""Gathering the needed informations from the API."""
 import json
 import requests
-import sys
+from sys import argv
 
+if __name__ == '__main__':
+    resp_users = requests.get('https://jsonplaceholder.typicode.com/users')
+    resp_todos = requests.get('https://jsonplaceholder.typicode.com/todos')
 
-if __name__ == "__main__":
-    api_url = "https://jsonplaceholder.typicode.com"
-    emp_id = sys.argv[1]
+    user_id = argv[1]
 
-    res = requests.get("{}/users/{}/todos".format(api_url, emp_id),
-                       params={"_expand": "user"})
-    data = res.json()
-    employee_name = data[0]["user"]["username"]
-    emp_tasks = {emp_id: []}
-
-    for task in data:
-        task_dic = {"task": task["title"], "completed": task["completed"],
-                    "username": employee_name}
-        emp_tasks[emp_id].append(task_dic)
-
-    with open("{}.json".format(emp_id), "w")as jsfile:
-        json.dump(emp_tasks, jsfile)
+    json_dic = dict()
+    json_list = list()
+    small_dic = dict()
+    for i in resp_users.json():
+        if i['id'] == int(user_id):
+            user_name = i['username']
+    for i in resp_todos.json():
+        if i['userId'] == int(user_id):
+            small_dic = {}
+            small_dic["task"] = i['title']
+            small_dic["completed"] = i['completed']
+            small_dic["username"] = user_name
+            json_list.append(small_dic)
+    json_dic[user_id] = json_list
+    with open(f"{user_id}.json", 'w') as j_file:
+        json.dump(json_dic, j_file)
