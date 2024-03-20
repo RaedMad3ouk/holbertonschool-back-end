@@ -1,23 +1,23 @@
 #!/usr/bin/python3
-"""Write a Python script that, using REST API
-returns the csv presentation
-"""
+"""Gathering the needed informations from the API."""
 import csv
+import json
 import requests
-import sys
+from sys import argv
 
+if __name__ == '__main__':
+    resp_users = requests.get('https://jsonplaceholder.typicode.com/users')
+    resp_todos = requests.get('https://jsonplaceholder.typicode.com/todos')
 
-if __name__ == "__main__":
-    api_url = "https://jsonplaceholder.typicode.com"
-    emp_id = sys.argv[1]
+    user_id = argv[1]
 
-    res = requests.get("{}/users/{}/todos".format(api_url, emp_id),
-                       params={"_expand": "user"})
-    data = res.json()
-    employee_name = data[0]["user"]["username"]
-    with open("{}.csv".format(emp_id), "w", newline="") as csvfile:
-        spamwriter = csv.writer(csvfile, quoting=csv.QUOTE_NONNUMERIC)
-        for task in data:
-            spamwriter.writerow([emp_id,
-                                 employee_name,
-                                 str(task["completed"]), task["title"]])
+    for i in resp_users.json():
+        if i['id'] == int(user_id):
+            user_name = i['username']
+    with open(f'{user_id}.csv', 'w') as f:
+        for i in resp_todos.json():
+            if i['userId'] == int(user_id):
+                task = i['completed']
+                title = i['title']
+                f.write(
+                    f"\"{argv[1]}\",\"{user_name}\",\"{task}\",\"{title}\"\n")
