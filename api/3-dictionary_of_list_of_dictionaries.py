@@ -1,25 +1,26 @@
 #!/usr/bin/python3
-"""Write a Python script that, using REST API
-and export data in the JSON format. """
+"""Gathering the needed informations from the API."""
 import json
 import requests
 
-if __name__ == "__main__":
-    api_url = "https://jsonplaceholder.typicode.com"
+if __name__ == '__main__':
+    resp_users = requests.get('https://jsonplaceholder.typicode.com/users')
+    resp_todos = requests.get('https://jsonplaceholder.typicode.com/todos')
 
-    res1 = requests.get("{}/users".format(api_url))
-    data1 = res1.json()
-    emp_dic = {}
+    json_dic = dict()
+    small_dic = dict()
+    for u in resp_users.json():
+        user_id = u['id']
+        if user_id not in json_dic:
+            json_dic[user_id] = []
 
-    for user in data1:
-        res2 = requests.get("{}/users/{}/todos".format(api_url, user["id"]),
-                            params={"_expand": "user"})
-        data2 = res2.json()
-        emp_dic[user["id"]] = []
-        for task in data2:
-            dic_task = {"username": user["username"], "task": task["title"],
-                        "completed": task["completed"]}
-            emp_dic[user["id"]].append(dic_task)
+        for t in resp_todos.json():
+            small_dic = {}
+            if user_id == t['userId']:
+                small_dic["username"] = u['username']
+                small_dic["task"] = t['title']
+                small_dic["completed"] = t['completed']
 
-    with open("todo_all_employees.json", "w")as jsfile:
-        json.dump(emp_dic, jsfile)
+                json_dic[user_id].append(small_dic)
+    with open(f"todo_all_employees.json", 'w') as j_file:
+        json.dump(json_dic, j_file)
